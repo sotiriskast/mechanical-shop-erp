@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel/laravel",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Mechanical Shop ERP System.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
@@ -10,8 +10,10 @@
         "inertiajs/inertia-laravel": "^1.0",
         "laravel/framework": "^11.31",
         "laravel/jetstream": "^5.3",
+        "laravel/reverb": "^1.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-medialibrary": "^11.12",
         "spatie/laravel-permission": "^6.15",
@@ -32,6 +34,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Modules\\": "src/Modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }

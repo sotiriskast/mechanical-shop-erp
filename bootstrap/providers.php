@@ -4,6 +4,13 @@ return [
     App\Providers\AppServiceProvider::class,
     App\Providers\FortifyServiceProvider::class,
     App\Providers\JetstreamServiceProvider::class,
-    App\Modules\Core\Providers\ModuleServiceProvider::class,
-    Spatie\Permission\PermissionServiceProvider::class
+    App\Providers\DashboardServiceProvider::class,
+    App\Providers\EventServiceProvider::class,
+
+    Spatie\Permission\PermissionServiceProvider::class,
+
+    \Modules\Core\src\Providers\ModuleServiceProvider::class,
+    \Modules\Core\src\Providers\CoreServiceProvider::class,
+    \Modules\Core\src\Providers\ApiServiceProvider::class,
+
 ];
