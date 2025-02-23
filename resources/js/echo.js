@@ -12,4 +12,10 @@ window.Echo = new Echo({
     wssPort: import.meta.env.VITE_PUSHER_PORT ?? 443,
     forceTLS: import.meta.env.VITE_PUSHER_SCHEME === 'https',
     enabledTransports: ['ws', 'wss'],
+    disableStats: true,
+    enableLogging: true,
+});
+
+window.Echo.connector.pusher.connection.bind('error', function(err) {
+    console.log('Pusher error:', err);
 });

@@ -15,7 +15,18 @@ class DashboardService
 {
     public function getStatistics()
     {
-        return [];
+        return [
+            'counts' => 0,
+            'revenue' => [
+                'monthlyRevenue' => 0, // Add this default value
+                'current_month' => 0,
+                'last_month' => 0,
+                'percentage_change' => 0,
+                'monthly_trend' => []
+            ],
+            'recent' => 0,
+            'trends' => 0,
+        ];
         return [
             'counts' => $this->getCounts(),
             'revenue' => $this->getRevenueStats(),

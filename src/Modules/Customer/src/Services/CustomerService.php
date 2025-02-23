@@ -1,34 +1,32 @@
 <?php
 
-
 namespace Modules\Customer\src\Services;
 
-use Illuminate\Support\Facades\Log;
 use Modules\Core\src\Abstracts\BaseService;
+use Modules\Customer\src\Actions\CreateCustomerAction;
+use Modules\Customer\src\Actions\UpdateCustomerAction;
+use Modules\Customer\src\Actions\DeleteCustomerAction;
+use Modules\Customer\src\Contracts\CustomerServiceInterface;
+use Modules\Customer\src\DTOs\CustomerData;
+use Modules\Customer\src\Models\Customer;
 use Modules\Customer\src\Exceptions\CustomerException;
-use Modules\Customer\src\Repositories\CustomerRepository;
-use Illuminate\Support\Facades\DB;
-use Modules\Customer\src\Events\CustomerCreated;
-use Modules\Customer\src\Events\CustomerUpdated;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
-class CustomerService extends BaseService
+class CustomerService implements CustomerServiceInterface
 {
     public function __construct(
-        protected CustomerRepository $customerRepository
-    ) {
-        parent::__construct($customerRepository);
-    }
+        private readonly CustomerRepositoryInterface $repository,
+        private readonly CreateCustomerAction $createAction,
+        private readonly UpdateCustomerAction $updateAction,
+        private readonly DeleteCustomerAction $deleteAction
+    ) {}
 
-    public function list(array $params = [])
+    public function list(array $params = []): LengthAwarePaginator
     {
         try {
-            return $this->customerRepository->searchCustomers($params);
+            return $this->repository->searchCustomers($params);
         } catch (\Exception $e) {
-            Log::error('Failed to fetch customers list', [
-                'error' => $e->getMessage(),
-                'params' => $params
-            ]);
-
             throw new CustomerException(
                 trans('customers.errors.fetch_failed'),
                 0,
@@ -37,29 +35,12 @@ class CustomerService extends BaseService
         }
     }
 
-    public function create(array $data)
+    public function create(array $data): Customer
     {
         try {
-            return DB::transaction(function () use ($data) {
-                $customer = $this->customerRepository->create($data);
-
-                if (isset($data['documents'])) {
-                    foreach ($data['documents'] as $document) {
-                        $customer->addMedia($document)
-                            ->toMediaCollection('documents');
-                    }
-                }
-
-                event(new CustomerCreated($customer));
-
-                return $customer;
-            });
+            $customerData = CustomerData::fromRequest($data);
+            return $this->createAction->execute($customerData);
         } catch (\Exception $e) {
-            Log::error('Failed to create customer', [
-                'error' => $e->getMessage(),
-                'data' => $data
-            ]);
-
             throw new CustomerException(
                 trans('customers.errors.create_failed'),
                 0,
@@ -68,38 +49,12 @@ class CustomerService extends BaseService
         }
     }
 
-    public function update(int $id, array $data)
+    public function update(int $id, array $data): Customer
     {
         try {
-            return DB::transaction(function () use ($id, $data) {
-                $customer = $this->customerRepository->find($id);
-
-                if (!$customer) {
-                    throw new CustomerException(trans('customers.errors.not_found'));
-                }
-
-                $customer = $this->customerRepository->update($id, $data);
-
-                if (isset($data['documents'])) {
-                    foreach ($data['documents'] as $document) {
-                        $customer->addMedia($document)
-                            ->toMediaCollection('documents');
-                    }
-                }
-
-                event(new CustomerUpdated($customer));
-
-                return $customer;
-            });
-        } catch (CustomerException $e) {
-            throw $e;
+            $customerData = CustomerData::fromRequest($data);
+            return $this->updateAction->execute($id, $customerData);
         } catch (\Exception $e) {
-            Log::error('Failed to update customer', [
-                'error' => $e->getMessage(),
-                'customer_id' => $id,
-                'data' => $data
-            ]);
-
             throw new CustomerException(
                 trans('customers.errors.update_failed'),
                 0,
@@ -108,35 +63,11 @@ class CustomerService extends BaseService
         }
     }
 
-    public function delete(int $id)
+    public function delete(int $id): bool
     {
         try {
-            return DB::transaction(function () use ($id) {
-                $customer = $this->customerRepository->find($id);
-
-                if (!$customer) {
-                    throw new CustomerException(trans('customers.errors.not_found'));
-                }
-
-                // Check if customer can be deleted (no related records)
-                if ($this->hasRelatedRecords($customer)) {
-                    throw new CustomerException(trans('customers.errors.has_related_records'));
-                }
-
-                $this->customerRepository->delete($id);
-
-                event(new CustomerDeleted($customer));
-
-                return true;
-            });
-        } catch (CustomerException $e) {
-            throw $e;
+            return $this->deleteAction->execute($id);
         } catch (\Exception $e) {
-            Log::error('Failed to delete customer', [
-                'error' => $e->getMessage(),
-                'customer_id' => $id
-            ]);
-
             throw new CustomerException(
                 trans('customers.errors.delete_failed'),
                 0,
@@ -145,24 +76,11 @@ class CustomerService extends BaseService
         }
     }
 
-    public function findByCode(string $code)
+    public function findByCode(string $code): ?Customer
     {
         try {
-            $customer = $this->customerRepository->findByCode($code);
-
-            if (!$customer) {
-                throw new CustomerException(trans('customers.errors.not_found'));
-            }
-
-            return $customer;
-        } catch (CustomerException $e) {
-            throw $e;
+            return $this->repository->findByCode($code);
         } catch (\Exception $e) {
-            Log::error('Failed to find customer by code', [
-                'error' => $e->getMessage(),
-                'code' => $code
-            ]);
-
             throw new CustomerException(
                 trans('customers.errors.fetch_failed'),
                 0,
@@ -171,40 +89,16 @@ class CustomerService extends BaseService
         }
     }
 
-    public function getActiveCustomers()
+    public function getActiveCustomers(): Collection
     {
         try {
-            return $this->customerRepository->getActiveCustomers();
+            return $this->repository->getActiveCustomers();
         } catch (\Exception $e) {
-            Log::error('Failed to fetch active customers', [
-                'error' => $e->getMessage()
-            ]);
-
             throw new CustomerException(
                 trans('customers.errors.fetch_failed'),
                 0,
                 $e
             );
         }
-    }
-
-    protected function hasRelatedRecords($customer): bool
-    {
-        // Check for related vehicles
-        if ($customer->vehicles()->count() > 0) {
-            return true;
-        }
-
-        // Check for related work orders
-        if ($customer->workOrders()->count() > 0) {
-            return true;
-        }
-
-        // Check for related invoices
-        if ($customer->invoices()->count() > 0) {
-            return true;
-        }
-
-        return false;
     }
 }

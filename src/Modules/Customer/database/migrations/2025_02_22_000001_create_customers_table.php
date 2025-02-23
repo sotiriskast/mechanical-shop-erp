@@ -14,8 +14,8 @@ return new class extends Migration
             $table->string('code', 20)->unique();
             $table->string('first_name');
             $table->string('last_name');
-            $table->string('email')->unique();
-            $table->string('phone', 20)->nullable();
+            $table->string('email')->nullable();
+            $table->string('phone', 20)->unique();
             $table->string('mobile', 20)->nullable();
             $table->string('company_name')->nullable();
             $table->string('vat_number', 20)->nullable();

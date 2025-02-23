@@ -1,11 +1,14 @@
 <script setup>
-import { ref } from 'vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { ref, computed } from 'vue'
+import { Head, Link, usePage } from '@inertiajs/vue3'
 import ApplicationLogo from '@/Components/ApplicationLogo.vue'
 import Dropdown from '@/Components/Dropdown.vue'
 import DropdownLink from '@/Components/DropdownLink.vue'
 import NavLink from '@/Components/NavLink.vue'
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue'
+import { BellIcon, BellAlertIcon } from '@heroicons/vue/24/outline'
+import FlashMessage from "@/Components/FlashMessage.vue";
+
 
 defineProps({
     title: {
@@ -15,12 +18,26 @@ defineProps({
 })
 
 const showingNavigationDropdown = ref(false)
+const showNotifications = ref(false)
+
+const notifications = computed(() => usePage().props.auth.user.notifications)
+const unreadNotificationsCount = computed(() => usePage().props.auth.user.unread_notifications_count)
+
+const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })
+}
 </script>
 
 <template>
     <div>
-        <Head :title="title" />
-
+        <Head :title="title"/>
+        <FlashMessage/>
         <div class="min-h-screen bg-gray-100">
             <nav class="bg-white border-b border-gray-100">
                 <!-- Primary Navigation Menu -->
@@ -30,7 +47,7 @@ const showingNavigationDropdown = ref(false)
                             <!-- Logo -->
                             <div class="shrink-0 flex items-center">
                                 <Link :href="route('dashboard')">
-                                    <ApplicationLogo class="block h-9 w-auto" />
+                                    <ApplicationLogo class="block h-9 w-auto"/>
                                 </Link>
                             </div>
 
@@ -46,40 +63,95 @@ const showingNavigationDropdown = ref(false)
                         </div>
 
                         <!-- Settings Dropdown -->
-                        <div class="hidden sm:flex sm:items-center sm:ml-6">
-                            <Dropdown align="right" width="48">
-                                <template #trigger>
-                                    <button class="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
-                                        <div>{{ $page.props.auth.user.name }}</div>
+                        <div class="hidden sm:flex sm:items-center sm:ml-6 space-x-4">
+                            <!-- Notifications Dropdown -->
+                            <div class="relative">
+                                <button
+                                    @click="showNotifications = !showNotifications"
+                                    class="relative p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <BellAlertIcon v-if="unreadNotificationsCount" class="h-6 w-6 text-gray-600"/>
+                                    <BellIcon v-else class="h-6 w-6 text-gray-600"/>
 
-                                        <div class="ml-1">
-                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                            </svg>
+                                    <!-- Notification Badge -->
+                                    <div
+                                        v-if="unreadNotificationsCount"
+                                        class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1"
+                                    >
+                                        {{ unreadNotificationsCount }}
+                                    </div>
+                                </button>
+
+                                <!-- Notifications Panel -->
+                                <div
+                                    v-show="showNotifications"
+                                    class="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-50"
+                                >
+                                    <div class="py-2">
+                                        <div class="px-4 py-2 bg-gray-50 border-b border-gray-200">
+                                            <div class="flex justify-between items-center">
+                                                <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
+                                                <button
+                                                    v-if="unreadNotificationsCount"
+                                                    class="text-xs text-blue-600 hover:text-blue-800"
+                                                    @click="markAllAsRead"
+                                                >
+                                                    Mark all as read
+                                                </button>
+                                            </div>
                                         </div>
-                                    </button>
-                                </template>
 
-                                <template #content>
-                                    <DropdownLink :href="route('profile.show')">
-                                        Profile
-                                    </DropdownLink>
+                                        <div v-if="notifications.length" class="max-h-64 overflow-y-auto">
+                                            <div
+                                                v-for="notification in notifications"
+                                                :key="notification.id"
+                                                class="px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
+                                                :class="{ 'bg-blue-50': !notification.read_at }"
+                                            >
+                                                <div class="flex items-start">
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-medium text-gray-900">
+                                                            {{ notification.data.title }}
+                                                        </p>
+                                                        <p class="text-sm text-gray-500">
+                                                            {{ notification.data.message }}
+                                                        </p>
+                                                        <p class="mt-1 text-xs text-gray-400">
+                                                            {{ formatDate(notification.created_at) }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                    <form @submit.prevent="logout">
-                                        <DropdownLink as="button">
-                                            Log Out
-                                        </DropdownLink>
-                                    </form>
-                                </template>
+                                        <div
+                                            v-else
+                                            class="px-4 py-6 text-center text-gray-500"
+                                        >
+                                            No notifications
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Settings Dropdown -->
+                            <Dropdown align="right" width="48">
+                                <!-- Rest of your existing settings dropdown -->
                             </Dropdown>
                         </div>
-
                         <!-- Hamburger -->
                         <div class="-mr-2 flex items-center sm:hidden">
-                            <button @click="showingNavigationDropdown = !showingNavigationDropdown" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                            <button @click="showingNavigationDropdown = !showingNavigationDropdown"
+                                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
                                 <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                                    <path :class="{'hidden': showingNavigationDropdown, 'inline-flex': !showingNavigationDropdown }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                                    <path :class="{'hidden': !showingNavigationDropdown, 'inline-flex': showingNavigationDropdown }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    <path
+                                        :class="{'hidden': showingNavigationDropdown, 'inline-flex': !showingNavigationDropdown }"
+                                        stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6h16M4 12h16M4 18h16"/>
+                                    <path
+                                        :class="{'hidden': !showingNavigationDropdown, 'inline-flex': showingNavigationDropdown }"
+                                        stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                             </button>
                         </div>
@@ -87,7 +159,8 @@ const showingNavigationDropdown = ref(false)
                 </div>
 
                 <!-- Responsive Navigation Menu -->
-                <div :class="{'block': showingNavigationDropdown, 'hidden': !showingNavigationDropdown}" class="sm:hidden">
+                <div :class="{'block': showingNavigationDropdown, 'hidden': !showingNavigationDropdown}"
+                     class="sm:hidden">
                     <div class="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
                             Dashboard
@@ -128,13 +201,13 @@ const showingNavigationDropdown = ref(false)
             <!-- Page Heading -->
             <header class="bg-white shadow" v-if="$slots.header">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    <slot name="header" />
+                    <slot name="header"/>
                 </div>
             </header>
 
             <!-- Page Content -->
             <main>
-                <slot />
+                <slot/>
             </main>
         </div>
     </div>

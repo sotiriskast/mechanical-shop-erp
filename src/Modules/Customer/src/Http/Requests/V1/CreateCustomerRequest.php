@@ -1,11 +1,11 @@
 <?php
 
 namespace Modules\Customer\src\Http\Requests\V1;
-use Illuminate\Http\Request;
 use Modules\Customer\src\Rules\CyprusPhoneNumber;
 use Modules\Customer\src\Rules\CyprusVatNumber;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCustomerRequest
+class CreateCustomerRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -17,8 +17,8 @@ class CreateCustomerRequest
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:customers,email'],
-            'phone' => ['nullable', new CyprusPhoneNumber],
+            'email' => ['nullable','email'],
+            'phone' => ['required', new CyprusPhoneNumber],
             'mobile' => ['nullable', new CyprusPhoneNumber],
             'company_name' => ['nullable', 'string', 'max:255'],
             'vat_number' => ['nullable', new CyprusVatNumber],

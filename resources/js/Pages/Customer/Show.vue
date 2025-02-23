@@ -1,13 +1,12 @@
 <script setup>
-import {computed} from 'vue'
-import {Link} from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import {
     PencilIcon,
     TrashIcon,
     ArrowLeftIcon
 } from '@heroicons/vue/24/outline'
-import {PlusIcon} from "@heroicons/vue/24/outline/index.js";
 
 const props = defineProps({
     customer: {
@@ -23,15 +22,22 @@ const props = defineProps({
     }
 })
 
-const confirmDelete = () => {
-    if (confirm('Are you sure you want to delete this customer?')) {
-        router.delete(route('customers.destroy', props.customer.id))
-    }
-}
 const fullName = computed(() => {
     if (!props.customer) return 'Unknown Customer'
     return `${props.customer.first_name || ''} ${props.customer.last_name || ''}`.trim()
 })
+
+const title = computed(() => {
+    return `Customer: ${fullName.value}`
+})
+
+const confirmDelete = () => {
+    if (!props.customer?.id) return
+
+    if (confirm('Are you sure you want to delete this customer?')) {
+        router.delete(route('customers.destroy', props.customer.id))
+    }
+}
 </script>
 
 <template>
@@ -49,7 +55,7 @@ const fullName = computed(() => {
 
                     <div class="flex space-x-2">
                         <Link
-                            v-if="can.edit"
+                            v-if="can.edit && customer?.id"
                             :href="route('customers.edit', customer.id)"
                             class="text-green-500 hover:text-green-700"
                             title="Edit"
@@ -57,7 +63,7 @@ const fullName = computed(() => {
                             Edit
                         </Link>
                         <button
-                            v-if="can.delete"
+                            v-if="can.delete && customer?.id"
                             @click="confirmDelete"
                             class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150"
                         >

@@ -1,21 +1,22 @@
 <?php
+
 namespace Modules\Customer\src\Rules;
 
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class CyprusVatNumber implements Rule
+class CyprusVatNumber implements ValidationRule
 {
-    public function passes($attribute, $value): bool
+    /**
+     * Run the validation rule.
+     *
+     * @param string $attribute
+     * @param mixed $value
+     * @param \Closure $fail
+     */
+    public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
-        if (empty($value)) {
-            return true;
+        if (!empty($value) && preg_match('/^CY\d{5,9}[A-Z]$/', $value) !== 1) {
+            $fail(trans('customers.validation.vat_number_format'));
         }
-
-        return preg_match('/^CY\d{9}[A-Z]$/', $value) === 1;
-    }
-
-    public function message(): string
-    {
-        return trans('customers.validation.vat_number_format');
     }
 }

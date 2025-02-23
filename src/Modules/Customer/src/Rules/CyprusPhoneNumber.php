@@ -2,21 +2,21 @@
 
 namespace Modules\Customer\src\Rules;
 
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class CyprusPhoneNumber implements Rule
+class CyprusPhoneNumber implements ValidationRule
 {
-    public function passes($attribute, $value): bool
+    /**
+     * Run the validation rule.
+     *
+     * @param string $attribute
+     * @param mixed $value
+     * @param \Closure $fail
+     */
+    public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
-        if (empty($value)) {
-            return true;
+        if (!empty($value) && preg_match('/^\+357\d{8}$/', $value) !== 1) {
+            $fail(trans('customers.validation.phone_number_format'));
         }
-
-        return preg_match('/^\+357\d{8}$/', $value) === 1;
-    }
-
-    public function message(): string
-    {
-        return trans('customers.validation.phone_number_format');
     }
 }

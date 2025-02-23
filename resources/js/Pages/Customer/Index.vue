@@ -11,7 +11,14 @@ import {
     EyeIcon,
     PlusIcon
 } from '@heroicons/vue/24/outline'
-
+const columns = [
+    { key: 'full_name', label: 'Name', sortable: true },
+    { key: 'company_name', label: 'Company', sortable: true },
+    { key: 'vat_number', label: 'VAT Number', sortable: true },
+    { key: 'phone', label: 'Phone', sortable: false },
+    { key: 'mobile', label: 'Mobile', sortable: false },
+    { key: 'actions', label: 'Actions', sortable: false }
+];
 const props = defineProps({
     customers: Object,
     filters: Object,
@@ -28,8 +35,8 @@ watch(search, debounce((value) => {
         preserveState: true,
         preserveScroll: true,
         replace: true
-    })
-}, 300))
+    });
+}, 300));
 
 const confirmDelete = (customerId) => {
     if (confirm('Are you sure you want to delete this customer?')) {
@@ -65,7 +72,7 @@ const confirmDelete = (customerId) => {
                         <div class="mb-6">
                             <SearchInput
                                 v-model="search"
-                                placeholder="Search customers..."
+                                placeholder="Search by name, company, VAT number..."
                             />
                         </div>
 
@@ -73,22 +80,29 @@ const confirmDelete = (customerId) => {
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th v-for="column in columns" :key="column.key"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                        {{ column.label }}
+                                    </th>
                                 </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                 <tr v-for="customer in customers.data" :key="customer.id">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ customer.first_name }} {{ customer.last_name }}
+                                        {{ customer.full_name }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ customer.email }}
+                                        {{ customer.company_name || '-' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ customer.phone }}
+                                        {{ customer.vat_number || '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {{ customer.phone || '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {{ customer.mobile || '-' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right flex justify-end space-x-2">
                                         <Link

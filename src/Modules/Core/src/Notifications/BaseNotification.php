@@ -10,7 +10,7 @@ abstract class BaseNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected array $channels = ['database', 'mail'];
+    protected array $channels = ['database', 'mail','broadcast'];
 
     public function via($notifiable): array
     {

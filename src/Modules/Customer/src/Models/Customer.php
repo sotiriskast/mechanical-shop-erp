@@ -35,7 +35,9 @@ class Customer extends Model implements HasMedia
         'notes',
         'is_active'
     ];
-
+    protected $attributes = [
+        'country' => 'Cyprus',
+    ];
     protected $casts = [
         'is_active' => 'boolean',
     ];
