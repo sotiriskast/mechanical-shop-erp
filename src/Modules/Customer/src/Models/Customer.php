@@ -3,6 +3,7 @@
 
 namespace Modules\Customer\src\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -15,7 +16,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Customer extends Model implements HasMedia
 {
-    use SoftDeletes, InteractsWithMedia, LogsActivity;
+    use SoftDeletes, InteractsWithMedia, LogsActivity,hasFactory;
 
     protected $fillable = [
         'code',
