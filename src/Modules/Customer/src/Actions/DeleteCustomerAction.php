@@ -4,13 +4,13 @@ namespace Modules\Customer\src\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Modules\Customer\src\Events\CustomerDeleted;
-use Modules\Customer\src\Contracts\CustomerRepositoryInterface;
 use Modules\Customer\src\Exceptions\CustomerException;
+use Modules\Customer\src\Repositories\CustomerRepository;
 
 class DeleteCustomerAction
 {
     public function __construct(
-        private CustomerRepositoryInterface $repository
+        private CustomerRepository $repository
     )
     {
     }

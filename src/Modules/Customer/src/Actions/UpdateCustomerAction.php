@@ -6,14 +6,14 @@ use Illuminate\Support\Facades\DB;
 use Modules\Customer\src\DTOs\CustomerData;
 use Modules\Customer\src\Events\CustomerUpdated;
 use Modules\Customer\src\Models\Customer;
+use Modules\Customer\src\Repositories\CustomerRepository;
 use Modules\Customer\src\Services\CustomerMediaService;
-use Modules\Customer\src\Contracts\CustomerRepositoryInterface;
 use Modules\Customer\src\Exceptions\CustomerException;
 
 class UpdateCustomerAction
 {
     public function __construct(
-        private CustomerRepositoryInterface $repository,
+        private CustomerRepository $repository,
         private CustomerMediaService $mediaService
     ) {}
 

@@ -6,21 +6,24 @@ use Modules\Core\src\Abstracts\BaseService;
 use Modules\Customer\src\Actions\CreateCustomerAction;
 use Modules\Customer\src\Actions\UpdateCustomerAction;
 use Modules\Customer\src\Actions\DeleteCustomerAction;
-use Modules\Customer\src\Contracts\CustomerServiceInterface;
 use Modules\Customer\src\DTOs\CustomerData;
 use Modules\Customer\src\Models\Customer;
 use Modules\Customer\src\Exceptions\CustomerException;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection;
+use Modules\Customer\src\Repositories\CustomerRepository;
 
-class CustomerService implements CustomerServiceInterface
+class CustomerService extends BaseService
 {
     public function __construct(
-        private readonly CustomerRepositoryInterface $repository,
-        private readonly CreateCustomerAction $createAction,
-        private readonly UpdateCustomerAction $updateAction,
-        private readonly DeleteCustomerAction $deleteAction
-    ) {}
+        CustomerRepository   $repository,
+        private CreateCustomerAction $createAction,
+        private UpdateCustomerAction $updateAction,
+        private DeleteCustomerAction $deleteAction
+    )
+    {
+        parent::__construct($repository);
+    }
 
     public function list(array $params = []): LengthAwarePaginator
     {

@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\DashboardService;
 use Carbon\Carbon;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 use Modules\Customer\src\Models\Customer;
 
 class DashboardController extends Controller

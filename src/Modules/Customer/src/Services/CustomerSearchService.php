@@ -3,13 +3,13 @@
 namespace Modules\Customer\src\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
-use Modules\Customer\src\Contracts\CustomerRepositoryInterface;
 use Modules\Customer\src\Exceptions\CustomerException;
+use Modules\Customer\src\Repositories\CustomerRepository;
 
 class CustomerSearchService
 {
     public function __construct(
-        private readonly CustomerRepositoryInterface $repository
+        private readonly CustomerRepository $repository
     )
     {
     }

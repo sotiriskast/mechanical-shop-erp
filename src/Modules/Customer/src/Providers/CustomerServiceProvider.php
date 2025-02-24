@@ -6,8 +6,6 @@ use Modules\Core\src\Providers\BaseModuleServiceProvider;
 use Modules\Customer\src\Actions\CreateCustomerAction;
 use Modules\Customer\src\Actions\DeleteCustomerAction;
 use Modules\Customer\src\Actions\UpdateCustomerAction;
-use Modules\Customer\src\Contracts\CustomerRepositoryInterface;
-use Modules\Customer\src\Contracts\CustomerServiceInterface;
 use Modules\Customer\src\Models\Customer;
 use Modules\Customer\src\Repositories\CustomerRepository;
 use Modules\Customer\src\Services\CustomerMediaService;
@@ -21,8 +19,6 @@ class CustomerServiceProvider extends BaseModuleServiceProvider
 
     protected function registerBindings(): void
     {
-        $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
-        $this->app->bind(CustomerServiceInterface::class, CustomerService::class);
 
         // Bind concrete implementations
         $this->app->bind(CustomerRepository::class, function ($app) {
@@ -40,7 +36,7 @@ class CustomerServiceProvider extends BaseModuleServiceProvider
 
         $this->app->bind(CustomerService::class, function ($app) {
             return new CustomerService(
-                $app->make(CustomerRepositoryInterface::class),
+                $app->make(CustomerRepository::class),
                 $app->make(CreateCustomerAction::class),
                 $app->make(UpdateCustomerAction::class),
                 $app->make(DeleteCustomerAction::class)

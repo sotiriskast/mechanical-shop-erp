@@ -7,10 +7,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Modules\Core\src\Abstracts\BaseRepository;
-use Modules\Customer\src\Contracts\CustomerRepositoryInterface;
 use Modules\Customer\src\Models\Customer;
 
-class CustomerRepository extends BaseRepository implements CustomerRepositoryInterface
+class CustomerRepository extends BaseRepository
 {
     private const CACHE_TTL = 3600; // 1 hour
 
