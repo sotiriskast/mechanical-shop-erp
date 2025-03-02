@@ -3,18 +3,17 @@ namespace Modules\Customer\src\Http\Controllers\V1;
 
 use Illuminate\Http\Request;
 use Modules\Core\src\Http\Controllers\BaseApiController;
-use Modules\Customer\src\Contracts\CustomerServiceInterface;
+use Modules\Customer\src\Services\CustomerService;
 use Modules\Customer\src\Exceptions\CustomerException;
 use Modules\Customer\src\Http\Requests\V1\CreateCustomerRequest;
 use Modules\Customer\src\Http\Requests\V1\UpdateCustomerRequest;
 use Modules\Customer\src\Http\Resources\V1\CustomerResource;
 use Modules\Customer\src\Services\CustomerSearchService;
-use Modules\Customer\src\Services\CustomerService;
 
 class CustomerController extends BaseApiController
 {
     public function __construct(
-        private readonly CustomerServiceInterface $customerService,
+        private readonly CustomerService $customerService,
         private readonly CustomerSearchService $searchService
     ) {
         $this->middleware('permission:view-customers')->only(['index', 'show', 'search']);

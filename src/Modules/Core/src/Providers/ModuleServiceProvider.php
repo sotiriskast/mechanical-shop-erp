@@ -31,6 +31,7 @@ class ModuleServiceProvider extends ServiceProvider
 
             // Register module service provider
             $this->registerModuleProvider($moduleName);
+
         }
     }
 

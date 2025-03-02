@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Core\src\Traits\LogsActivity;
+use Modules\Vehicle\src\Models\Vehicle;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -64,5 +65,8 @@ class Customer extends Model implements HasMedia
     {
         return "{$this->first_name} {$this->last_name}";
     }
-
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class);
+    }
 }

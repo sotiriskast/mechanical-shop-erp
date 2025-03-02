@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use Modules\Customer\database\Seeders\CustomerSeeder;
+use Modules\Vehicle\database\seeders\VehiclePermissionSeeder;
+use Modules\Vehicle\database\seeders\VehicleSeeder;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesAndPermissionsSeeder::class,
             CustomerSeeder::class,
+            VehicleSeeder::class,
+            VehiclePermissionSeeder::class,
         ]);
 
     }
