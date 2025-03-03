@@ -1,6 +1,5 @@
-<script setup>
-import { ref } from 'vue'
-import { Head, useForm } from '@inertiajs/vue3'
+<script setup lang="ts">
+import { useForm } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import InputLabel from '@/components/ui/label/Label.vue'
 import TextInput from '@/components/ui/input/Input.vue'
@@ -8,11 +7,13 @@ import PrimaryButton from '@/components/ui/button/Button.vue'
 import InputError from '@/components/ui/error/InputError.vue'
 import Textarea from '@/components/ui/textarea/Textarea.vue'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
-// import FileUploader from '@/components/ui/fileUploader/FileUploader.vue'
 
-const props = defineProps({
-    customers: Object
-})
+// const props = defineProps({
+//     customers: {
+//         type: Array,
+//         required: true
+//     }
+// })
 
 const form = useForm({
     license_plate: '',
@@ -32,42 +33,18 @@ const form = useForm({
     documents: []
 })
 
-const engineTypes = [
-    'Gasoline',
-    'Diesel',
-    'Hybrid',
-    'Electric',
-    'Other'
-]
-
-const transmissionTypes = [
-    'Manual',
-    'Automatic',
-    'Semi-Automatic',
-    'CVT',
-    'Other'
-]
-
 const submit = () => {
     form.post(route('vehicles.store'), {
         preserveScroll: true,
-        forceFormData: true
+        onSuccess: () => {
+            form.reset()
+        }
     })
 }
 </script>
 
 <template>
     <AppLayout title="Add Vehicle">
-        <Head title="Add Vehicle" />
-
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Add New Vehicle
-                </h2>
-            </div>
-        </template>
-
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="mb-4">
@@ -81,9 +58,9 @@ const submit = () => {
                 </div>
 
                 <form @submit.prevent="submit" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Basic Information -->
-                        <div class="col-span-1 md:col-span-2">
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Vehicle Information -->
+                        <div class="col-span-2">
                             <h2 class="text-lg font-medium text-gray-900 mb-4">Vehicle Information</h2>
                         </div>
 
@@ -158,7 +135,7 @@ const submit = () => {
                         </div>
 
                         <!-- Technical Information -->
-                        <div class="col-span-1 md:col-span-2">
+                        <div class="col-span-2">
                             <h2 class="text-lg font-medium text-gray-900 mb-4">Technical Information</h2>
                         </div>
 
@@ -175,16 +152,12 @@ const submit = () => {
 
                         <div>
                             <InputLabel for="engine_type" value="Engine Type" />
-                            <select
+                            <TextInput
                                 id="engine_type"
                                 v-model="form.engine_type"
-                                class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                            >
-                                <option value="">Select Engine Type</option>
-                                <option v-for="type in engineTypes" :key="type" :value="type">
-                                    {{ type }}
-                                </option>
-                            </select>
+                                type="text"
+                                class="mt-1 block w-full"
+                            />
                             <InputError :message="form.errors.engine_type" class="mt-2" />
                         </div>
 
@@ -196,26 +169,25 @@ const submit = () => {
                                 class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                             >
                                 <option value="">Select Transmission</option>
-                                <option v-for="type in transmissionTypes" :key="type" :value="type">
-                                    {{ type }}
-                                </option>
+                                <option value="Manual">Manual</option>
+                                <option value="Automatic">Automatic</option>
+                                <option value="Semi-Automatic">Semi-Automatic</option>
                             </select>
                             <InputError :message="form.errors.transmission" class="mt-2" />
                         </div>
 
                         <div>
                             <InputLabel for="mileage" value="Mileage" />
-                            <div class="flex">
+                            <div class="flex items-center">
                                 <TextInput
                                     id="mileage"
                                     v-model="form.mileage"
                                     type="number"
-                                    class="mt-1 block w-full rounded-r-none"
-                                    min="0"
+                                    class="mt-1 block w-full"
                                 />
                                 <select
                                     v-model="form.mileage_unit"
-                                    class="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-r-md shadow-sm border-l-0 w-20"
+                                    class="mt-1 ml-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                 >
                                     <option value="km">km</option>
                                     <option value="mi">mi</option>
@@ -224,9 +196,9 @@ const submit = () => {
                             <InputError :message="form.errors.mileage" class="mt-2" />
                         </div>
 
-                        <!-- Owner Information -->
-                        <div class="col-span-1 md:col-span-2">
-                            <h2 class="text-lg font-medium text-gray-900 mb-4">Owner Information</h2>
+                        <!-- Customer Information -->
+                        <div class="col-span-2">
+                            <h2 class="text-lg font-medium text-gray-900 mb-4">Customer Information</h2>
                         </div>
 
                         <div>
@@ -238,7 +210,7 @@ const submit = () => {
                                 required
                             >
                                 <option value="">Select Customer</option>
-                                <option v-for="customer in customers.data" :key="customer.id" :value="customer.id">
+                                <option v-for="customer in customers" :key="customer.id" :value="customer.id">
                                     {{ customer.full_name }} {{ customer.company_name ? `(${customer.company_name})` : '' }}
                                 </option>
                             </select>
@@ -260,11 +232,11 @@ const submit = () => {
                         </div>
 
                         <!-- Additional Information -->
-                        <div class="col-span-1 md:col-span-2">
+                        <div class="col-span-2">
                             <h2 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h2>
                         </div>
 
-                        <div class="col-span-1 md:col-span-2">
+                        <div class="col-span-2">
                             <InputLabel for="notes" value="Notes" />
                             <Textarea
                                 id="notes"
@@ -275,23 +247,32 @@ const submit = () => {
                             <InputError :message="form.errors.notes" class="mt-2" />
                         </div>
 
-                        <!-- Document Upload -->
-                        <div class="col-span-1 md:col-span-2">
+                        <!-- File Upload -->
+                        <div class="col-span-2">
                             <InputLabel for="documents" value="Documents" />
-<!--                            <FileUploader-->
-<!--                                v-model="form.documents"-->
-<!--                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"-->
-<!--                            />-->
+                            <input
+                                type="file"
+                                id="documents"
+                                multiple
+                                @input="form.documents = $event.target.files"
+                                class="mt-1 block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-indigo-50 file:text-indigo-600
+                                hover:file:bg-indigo-100
+                                "
+                            />
                             <InputError :message="form.errors.documents" class="mt-2" />
                         </div>
 
                         <!-- Submit Button -->
-                        <div class="col-span-1 md:col-span-2 mt-6">
+                        <div class="col-span-2 mt-6">
                             <PrimaryButton
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
                             >
-                                Add Vehicle
+                                Create Vehicle
                             </PrimaryButton>
                         </div>
                     </div>

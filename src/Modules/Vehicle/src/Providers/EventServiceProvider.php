@@ -1,41 +1,77 @@
 <?php
+
 namespace Modules\Vehicle\src\Providers;
 
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Modules\Vehicle\src\Events\VehicleCreated;
-use Modules\Vehicle\src\Events\VehicleUpdated;
-use Modules\Vehicle\src\Events\VehicleDeleted;
-use Modules\Vehicle\src\Events\ServiceHistoryCreated;
-use Modules\Vehicle\src\Events\ServiceHistoryUpdated;
-use Modules\Vehicle\src\Events\ServiceHistoryDeleted;
-use Modules\Vehicle\src\Listeners\SendVehicleNotifications;
-use Modules\Vehicle\src\Listeners\SendServiceHistoryNotifications;
+use Modules\Core\src\Providers\BaseModuleServiceProvider;
+use Modules\Vehicle\src\Actions\CreateVehicleAction;
+use Modules\Vehicle\src\Actions\DeleteVehicleAction;
+use Modules\Vehicle\src\Actions\UpdateVehicleAction;
+use Modules\Vehicle\src\Actions\CreateServiceHistoryAction;
+use Modules\Vehicle\src\Actions\DeleteServiceHistoryAction;
+use Modules\Vehicle\src\Actions\UpdateServiceHistoryAction;
+use Modules\Vehicle\src\Models\Vehicle;
+use Modules\Vehicle\src\Models\ServiceHistory;
+use Modules\Vehicle\src\Repositories\VehicleRepository;
+use Modules\Vehicle\src\Repositories\ServiceHistoryRepository;
+use Modules\Vehicle\src\Services\VehicleMediaService;
+use Modules\Vehicle\src\Services\VehicleSearchService;
+use Modules\Vehicle\src\Services\VehicleService;
+use Modules\Vehicle\src\Services\ServiceHistoryService;
 
-class EventServiceProvider extends ServiceProvider
+class VehicleServiceProvider extends BaseModuleServiceProvider
 {
-    protected $listen = [
-        VehicleCreated::class => [
-            SendVehicleNotifications::class,
-        ],
-        VehicleUpdated::class => [
-            SendVehicleNotifications::class,
-        ],
-        VehicleDeleted::class => [
-            SendVehicleNotifications::class,
-        ],
-        ServiceHistoryCreated::class => [
-            SendServiceHistoryNotifications::class,
-        ],
-        ServiceHistoryUpdated::class => [
-            SendServiceHistoryNotifications::class,
-        ],
-        ServiceHistoryDeleted::class => [
-            SendServiceHistoryNotifications::class,
-        ],
-    ];
+    protected string $moduleName = 'Vehicle';
+    protected string $moduleNamespace = 'Modules\Vehicle';
 
-    public function boot()
+    protected function registerBindings(): void
     {
-        parent::boot();
+        // Register repositories
+        $this->app->bind(VehicleRepository::class, function ($app) {
+            return new VehicleRepository($app->make(Vehicle::class));
+        });
+
+        $this->app->bind(ServiceHistoryRepository::class, function ($app) {
+            return new ServiceHistoryRepository($app->make(ServiceHistory::class));
+        });
+
+        // Register vehicle actions as singletons
+        $this->app->singleton(CreateVehicleAction::class);
+        $this->app->singleton(UpdateVehicleAction::class);
+        $this->app->singleton(DeleteVehicleAction::class);
+
+        // Register service history actions as singletons
+        $this->app->singleton(CreateServiceHistoryAction::class);
+        $this->app->singleton(UpdateServiceHistoryAction::class);
+        $this->app->singleton(DeleteServiceHistoryAction::class);
+
+        // Register services
+        $this->app->singleton(VehicleMediaService::class);
+        $this->app->singleton(VehicleSearchService::class);
+
+        $this->app->bind(VehicleService::class, function ($app) {
+            return new VehicleService(
+                $app->make(VehicleRepository::class),
+                $app->make(CreateVehicleAction::class),
+                $app->make(UpdateVehicleAction::class),
+                $app->make(DeleteVehicleAction::class)
+            );
+        });
+
+        $this->app->bind(ServiceHistoryService::class, function ($app) {
+            return new ServiceHistoryService(
+                $app->make(ServiceHistoryRepository::class),
+                $app->make(CreateServiceHistoryAction::class),
+                $app->make(UpdateServiceHistoryAction::class),
+                $app->make(DeleteServiceHistoryAction::class)
+            );
+        });
+    }
+
+    protected function bootModule(): void
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+        $this->loadRoutesFrom(__DIR__ . '/../../routes/api.php');
+        $this->loadRoutesFrom(__DIR__ . '/../../routes/web.php');
+        $this->loadTranslationsFrom(__DIR__ . '/../../lang', 'vehicle');
     }
 }

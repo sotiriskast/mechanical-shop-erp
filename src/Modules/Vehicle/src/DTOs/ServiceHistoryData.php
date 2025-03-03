@@ -2,59 +2,47 @@
 
 namespace Modules\Vehicle\src\DTOs;
 
-use Modules\Vehicle\src\Http\Requests\V1\CreateServiceHistoryRequest;
+use Carbon\Carbon;
 
 class ServiceHistoryData
 {
     public function __construct(
         public readonly int $vehicleId,
-        public readonly string $serviceDate,
-        public readonly string $serviceType,
+        public readonly ?Carbon $serviceDate,
         public readonly string $description,
-        public readonly int $mileage,
-        public readonly string $mileageUnit,
-        public readonly ?string $technicianName,
-        public readonly float $cost,
-        public readonly string $status,
-        public readonly ?string $notes,
-        public readonly ?int $workOrderId = null,
+        public readonly ?float $cost = 0.0,
+        public readonly ?string $serviceType = null,
+        public readonly ?string $mechanic = null,
+        public readonly ?string $notes = null,
         public readonly ?array $documents = []
     ) {}
 
-    public static function fromRequest(CreateServiceHistoryRequest $request): self
+    // Static method to create from array (useful when coming from requests)
+    public static function fromArray(array $data): self
     {
-        $validated = $request->validated();
-
         return new self(
-            vehicleId: $validated['vehicle_id'],
-            serviceDate: $validated['service_date'],
-            serviceType: $validated['service_type'],
-            description: $validated['description'],
-            mileage: (int) $validated['mileage'],
-            mileageUnit: $validated['mileage_unit'] ?? 'km',
-            technicianName: $validated['technician_name'] ?? null,
-            cost: (float) ($validated['cost'] ?? 0),
-            status: $validated['status'] ?? 'completed',
-            notes: $validated['notes'] ?? null,
-            workOrderId: $validated['work_order_id'] ?? null,
-            documents: $validated['documents'] ?? []
+            vehicleId: $data['vehicle_id'],
+            serviceDate: isset($data['service_date']) ? Carbon::parse($data['service_date']) : null,
+            description: $data['description'],
+            cost: $data['cost'] ?? 0.0,
+            serviceType: $data['service_type'] ?? null,
+            mechanic: $data['mechanic'] ?? null,
+            notes: $data['notes'] ?? null,
+            documents: $data['documents'] ?? []
         );
     }
 
+    // Convert to array (useful for repository operations)
     public function toArray(): array
     {
         return [
             'vehicle_id' => $this->vehicleId,
             'service_date' => $this->serviceDate,
-            'service_type' => $this->serviceType,
             'description' => $this->description,
-            'mileage' => $this->mileage,
-            'mileage_unit' => $this->mileageUnit,
-            'technician_name' => $this->technicianName,
             'cost' => $this->cost,
-            'status' => $this->status,
-            'notes' => $this->notes,
-            'work_order_id' => $this->workOrderId
+            'service_type' => $this->serviceType,
+            'mechanic' => $this->mechanic,
+            'notes' => $this->notes
         ];
     }
 }

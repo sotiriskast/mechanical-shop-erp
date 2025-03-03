@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Core\src\Traits\LogsActivity;
 use Modules\Customer\src\Models\Customer;
+use Modules\Vehicle\Database\Factories\VehicleFactory;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -54,6 +55,14 @@ class Vehicle extends Model implements HasMedia
             $nextId = (static::withTrashed()->max('id') ?? 0) + 1;
             $vehicle->code = 'VEH-' . str_pad($nextId, 6, '0', STR_PAD_LEFT);
         });
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return VehicleFactory::new();
     }
 
     public function customer()

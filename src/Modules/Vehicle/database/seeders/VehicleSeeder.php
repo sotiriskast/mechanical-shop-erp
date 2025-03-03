@@ -12,7 +12,7 @@ class VehicleSeeder extends Seeder
     public function run(): void
     {
         // Get all customers
-        $customers = Customer::all();
+        $customers = Customer::factory()->count(20)->create();
 
         if ($customers->isEmpty()) {
             // Create customers if none exist

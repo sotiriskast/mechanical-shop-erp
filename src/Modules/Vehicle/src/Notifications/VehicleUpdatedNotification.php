@@ -9,12 +9,13 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Modules\Vehicle\src\Models\Vehicle;
 
-class VehicleCreatedNotification extends Notification implements ShouldQueue
+class VehicleUpdatedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(protected Vehicle $vehicle)
-    {}
+    {
+    }
 
     public function via($notifiable): array
     {
@@ -24,8 +25,8 @@ class VehicleCreatedNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(trans('vehicles.notifications.vehicle_created.title'))
-            ->line(trans('vehicles.notifications.vehicle_created.body', [
+            ->subject(trans('vehicles.notifications.vehicle_updated.title'))
+            ->line(trans('vehicles.notifications.vehicle_updated.body', [
                 'license_plate' => $this->vehicle->license_plate,
                 'make' => $this->vehicle->make,
                 'model' => $this->vehicle->model
@@ -37,8 +38,8 @@ class VehicleCreatedNotification extends Notification implements ShouldQueue
     {
         return [
             'vehicle_id' => $this->vehicle->id,
-            'title' => trans('vehicles.notifications.vehicle_created.title'),
-            'body' => trans('vehicles.notifications.vehicle_created.body', [
+            'title' => trans('vehicles.notifications.vehicle_updated.title'),
+            'body' => trans('vehicles.notifications.vehicle_updated.body', [
                 'license_plate' => $this->vehicle->license_plate,
                 'make' => $this->vehicle->make,
                 'model' => $this->vehicle->model
@@ -51,8 +52,8 @@ class VehicleCreatedNotification extends Notification implements ShouldQueue
     {
         return new BroadcastMessage([
             'vehicle_id' => $this->vehicle->id,
-            'title' => trans('vehicles.notifications.vehicle_created.title'),
-            'body' => trans('vehicles.notifications.vehicle_created.body', [
+            'title' => trans('vehicles.notifications.vehicle_updated.title'),
+            'body' => trans('vehicles.notifications.vehicle_updated.body', [
                 'license_plate' => $this->vehicle->license_plate,
                 'make' => $this->vehicle->make,
                 'model' => $this->vehicle->model

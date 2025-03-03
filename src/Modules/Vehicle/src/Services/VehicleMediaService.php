@@ -2,16 +2,17 @@
 
 namespace Modules\Vehicle\src\Services;
 
-use Illuminate\Database\Eloquent\Model;
+use Modules\Vehicle\src\Models\Vehicle;
+use Modules\Vehicle\src\Models\ServiceHistory;
 
 class VehicleMediaService
 {
-    public function attachDocuments(Model $model, array $documents, string $collection = 'documents'): void
+    public function attachDocuments(Vehicle|ServiceHistory $model, array $documents): void
     {
         foreach ($documents as $document) {
             $model->addMedia($document)
                 ->usingName($this->generateDocumentName($document))
-                ->toMediaCollection($collection);
+                ->toMediaCollection('documents');
         }
     }
 

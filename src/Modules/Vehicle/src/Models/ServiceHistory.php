@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Core\src\Traits\LogsActivity;
+use Modules\Vehicle\Database\Factories\ServiceHistoryFactory;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -39,6 +40,14 @@ class ServiceHistory extends Model implements HasMedia
         'mileage_unit' => 'km',
         'status' => 'completed',
     ];
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return ServiceHistoryFactory::new();
+    }
 
     public function vehicle()
     {

@@ -23,12 +23,27 @@ class ServiceHistoryResource extends JsonResource
             'status' => $this->status,
             'notes' => $this->notes,
             'work_order_id' => $this->work_order_id,
-            'vehicle' => new VehicleResource($this->whenLoaded('vehicle')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'vehicle' => $this->when($this->relationLoaded('vehicle'),
+                fn() => new VehicleResource($this->vehicle)
+            ),
+            'media' => $this->when($this->relationLoaded('media'), function() {
+                return $this->media->map(function($media) {
+                    return [
+                        'id' => $media->id,
+                        'file_name' => $media->file_name,
+                        'mime_type' => $media->mime_type,
+                        'size' => $media->size,
+                        'url' => $media->getUrl(),
+                        'extension' => $media->extension
+                    ];
+                });
+            }),
             'translations' => [
-                'fields' => trans('vehicles.fields', [], $locale),
-                'messages' => trans('vehicles.messages', [], $locale),
+                'fields' => trans('vehicles.service_history.fields', [], $locale),
+                'messages' => trans('vehicles.service_history.messages', [], $locale),
+                'status' => trans('vehicles.service_history.status', [], $locale)
             ],
         ];
     }

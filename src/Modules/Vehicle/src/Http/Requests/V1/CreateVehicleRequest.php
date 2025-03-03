@@ -1,34 +1,35 @@
 <?php
+// VehicleRequest classes
 
 namespace Modules\Vehicle\src\Http\Requests\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Modules\Vehicle\src\Rules\CyprusLicensePlate;
+use Modules\Vehicle\src\DTOs\VehicleData;
 
 class CreateVehicleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return true; // Use middleware for authorization
     }
 
     public function rules(): array
     {
         return [
-            'license_plate' => ['required', 'string', 'max:10', 'unique:vehicles,license_plate', new CyprusLicensePlate],
-            'vin' => ['nullable', 'string', 'max:17', 'unique:vehicles,vin'],
+            'customer_id' => ['required', 'exists:customers,id'],
             'make' => ['required', 'string', 'max:50'],
             'model' => ['required', 'string', 'max:50'],
-            'year' => ['required', 'integer', 'min:1900', 'max:' . (date('Y') + 1)],
+            'year' => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y'))],
+            'license_plate' => ['required', 'string', 'max:20', 'unique:vehicles,license_plate'],
+            'vin' => ['nullable', 'string', 'max:17', 'unique:vehicles,vin'],
             'color' => ['nullable', 'string', 'max:30'],
-            'engine_number' => ['nullable', 'string', 'max:30'],
             'engine_type' => ['nullable', 'string', 'max:30'],
-            'transmission' => ['nullable', 'string', 'max:30'],
+            'transmission' => ['nullable', 'string', 'max:20'],
             'mileage' => ['nullable', 'integer', 'min:0'],
-            'mileage_unit' => ['nullable', 'string', 'in:km,mi'],
+            'registration_date' => ['nullable', 'date'],
+            'mot_due_date' => ['nullable', 'date'],
+            'insurance_expiry_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string'],
-            'status' => ['nullable', 'string', 'in:active,inactive,sold'],
-            'customer_id' => ['required', 'integer', 'exists:customers,id'],
             'documents.*' => [
                 'nullable',
                 'file',
@@ -38,13 +39,10 @@ class CreateVehicleRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+    public function toDTO(): VehicleData
     {
-        return [
-            'license_plate.unique' => trans('vehicles.validation.license_plate_unique'),
-            'vin.unique' => trans('vehicles.validation.vin_unique'),
-            'documents.*.max' => trans('vehicles.validation.document_size'),
-            'documents.*.mimes' => trans('vehicles.validation.document_type'),
-        ];
+        return VehicleData::fromArray($this->validated());
     }
 }
+
+

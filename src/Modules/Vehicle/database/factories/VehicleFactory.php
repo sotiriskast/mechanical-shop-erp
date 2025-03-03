@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Vehicle\database\factories;
+namespace Modules\Vehicle\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Customer\src\Models\Customer;

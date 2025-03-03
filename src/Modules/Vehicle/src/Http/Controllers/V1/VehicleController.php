@@ -4,18 +4,20 @@ namespace Modules\Vehicle\src\Http\Controllers\V1;
 
 use Illuminate\Http\Request;
 use Modules\Core\src\Http\Controllers\BaseApiController;
-use Modules\Vehicle\src\Exceptions\ServiceHistoryException;
-use Modules\Vehicle\src\Http\Requests\V1\CreateServiceHistoryRequest;
-use Modules\Vehicle\src\Http\Requests\V1\UpdateServiceHistoryRequest;
-use Modules\Vehicle\src\Http\Resources\V1\ServiceHistoryResource;
-use Modules\Vehicle\src\Services\ServiceHistoryService;
+use Modules\Vehicle\src\Http\Requests\V1\CreateVehicleRequest;
+use Modules\Vehicle\src\Http\Requests\V1\UpdateVehicleRequest;
+use Modules\Vehicle\src\Http\Resources\V1\VehicleResource;
+use Modules\Vehicle\src\Services\VehicleSearchService;
+use Modules\Vehicle\src\Services\VehicleService;
 
 class VehicleController extends BaseApiController
 {
     public function __construct(
-        private readonly ServiceHistoryService $serviceHistoryService
-    ) {
-        $this->middleware('permission:view-vehicles')->only(['index', 'show']);
+        private readonly VehicleService       $vehicleService,
+        private readonly VehicleSearchService $searchService
+    )
+    {
+        $this->middleware('permission:view-vehicles')->only(['index', 'show', 'search']);
         $this->middleware('permission:create-vehicles')->only('store');
         $this->middleware('permission:edit-vehicles')->only('update');
         $this->middleware('permission:delete-vehicles')->only('destroy');
@@ -24,25 +26,39 @@ class VehicleController extends BaseApiController
     public function index(Request $request)
     {
         try {
-            $serviceHistories = $this->serviceHistoryService->list($request->all());
+            $vehicles = $this->vehicleService->list($request->all());
             return $this->successResponse(
-                ServiceHistoryResource::collection($serviceHistories),
-                'Service histories retrieved successfully'
+                VehicleResource::collection($vehicles),
+                'Vehicles retrieved successfully'
             );
-        } catch (ServiceHistoryException $e) {
+        } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
     }
 
-    public function store(CreateServiceHistoryRequest $request)
+    public function search(Request $request)
     {
         try {
-            $serviceHistory = $this->serviceHistoryService->create($request->validated());
-            return $this->createdResponse(
-                new ServiceHistoryResource($serviceHistory),
-                'Service history created successfully'
+            $vehicles = $this->searchService->search($request->all());
+            return $this->successResponse(
+                VehicleResource::collection($vehicles),
+                'Search results retrieved successfully'
             );
-        } catch (ServiceHistoryException $e) {
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    public function store(CreateVehicleRequest $request)
+    {
+        try {
+            $data = $request->toDTO();
+            $vehicle = $this->vehicleService->create($data);
+            return $this->createdResponse(
+                new VehicleResource($vehicle),
+                'Vehicle created successfully'
+            );
+        } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
     }
@@ -50,25 +66,26 @@ class VehicleController extends BaseApiController
     public function show(int $id)
     {
         try {
-            $serviceHistory = $this->serviceHistoryService->find($id);
+            $vehicle = $this->vehicleService->find($id);
             return $this->successResponse(
-                new ServiceHistoryResource($serviceHistory),
-                'Service history retrieved successfully'
+                new VehicleResource($vehicle),
+                'Vehicle retrieved successfully'
             );
-        } catch (ServiceHistoryException $e) {
+        } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
     }
 
-    public function update(UpdateServiceHistoryRequest $request, int $id)
+    public function update(UpdateVehicleRequest $request, int $id)
     {
         try {
-            $serviceHistory = $this->serviceHistoryService->update($id, $request->validated());
+            $data = $request->toDTO();
+            $vehicle = $this->vehicleService->update($id, $data);
             return $this->successResponse(
-                new ServiceHistoryResource($serviceHistory),
-                'Service history updated successfully'
+                new VehicleResource($vehicle),
+                'Vehicle updated successfully'
             );
-        } catch (ServiceHistoryException $e) {
+        } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
     }
@@ -76,9 +93,22 @@ class VehicleController extends BaseApiController
     public function destroy(int $id)
     {
         try {
-            $this->serviceHistoryService->delete($id);
-            return $this->noContentResponse('Service history deleted successfully');
-        } catch (ServiceHistoryException $e) {
+            $this->vehicleService->delete($id);
+            return $this->noContentResponse('Vehicle deleted successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    public function getByCustomer(int $customerId)
+    {
+        try {
+            $vehicles = $this->vehicleService->getVehiclesByCustomer($customerId);
+            return $this->successResponse(
+                VehicleResource::collection($vehicles),
+                'Vehicles retrieved successfully'
+            );
+        } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
     }

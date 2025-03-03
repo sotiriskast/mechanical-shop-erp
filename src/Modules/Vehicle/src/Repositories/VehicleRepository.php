@@ -49,7 +49,7 @@ class VehicleRepository extends BaseRepository
         return $this->model->where('license_plate', $licensePlate)->first();
     }
 
-    public function findByVin(string $vin): ?Vehicle
+    public function findByVIN(string $vin): ?Vehicle
     {
         return $this->model->where('vin', $vin)->first();
     }
@@ -63,9 +63,9 @@ class VehicleRepository extends BaseRepository
         });
     }
 
-    public function getCustomerVehicles(int $customerId): Collection
+    public function getVehiclesByCustomer(int $customerId): Collection
     {
-        return Cache::remember("customer:{$customerId}:vehicles", self::CACHE_TTL, function () use ($customerId) {
+        return Cache::remember("vehicles:customer:{$customerId}", self::CACHE_TTL, function () use ($customerId) {
             return $this->model->where('customer_id', $customerId)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -97,21 +97,21 @@ class VehicleRepository extends BaseRepository
 
     private function applySearchCriteria(Builder $query, string $search): Builder
     {
-        return $query->where(function ($q) use ($search) {
-            $q->where('license_plate', 'like', "%{$search}%")
-                ->orWhere('vin', 'like', "%{$search}%")
-                ->orWhere('make', 'like', "%{$search}%")
-                ->orWhere('model', 'like', "%{$search}%")
-                ->orWhere('code', 'like', "%{$search}%");
-        });
+        if (strlen($search) > 2) {
+            return $query->where(function ($q) use ($search) {
+                $q->where('make', 'like', "%{$search}%")
+                    ->orWhere('model', 'like', "%{$search}%")
+                    ->orWhere('license_plate', 'like', "%{$search}%")
+                    ->orWhere('vin', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        return $query;
     }
 
     private function applyFilters(Builder $query, array $params): Builder
     {
-        if (isset($params['customer_id'])) {
-            $query->where('customer_id', $params['customer_id']);
-        }
-
         if (isset($params['status'])) {
             $query->where('status', $params['status']);
         }
@@ -126,6 +126,10 @@ class VehicleRepository extends BaseRepository
 
         if (isset($params['year'])) {
             $query->where('year', $params['year']);
+        }
+
+        if (isset($params['customer_id'])) {
+            $query->where('customer_id', $params['customer_id']);
         }
 
         if (isset($params['created_from'])) {
@@ -158,10 +162,10 @@ class VehicleRepository extends BaseRepository
             Cache::forget($key);
         }
 
-        // Also invalidate any customer-specific vehicle caches
-        $customers = $this->model->distinct()->pluck('customer_id');
-        foreach ($customers as $customerId) {
-            Cache::forget("customer:{$customerId}:vehicles");
+        // Clear customer-specific caches
+        $customerIds = $this->model->select('customer_id')->distinct()->pluck('customer_id');
+        foreach ($customerIds as $customerId) {
+            Cache::forget("vehicles:customer:{$customerId}");
         }
     }
 }

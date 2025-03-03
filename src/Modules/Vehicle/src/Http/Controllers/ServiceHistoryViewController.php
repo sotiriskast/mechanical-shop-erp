@@ -2,10 +2,10 @@
 
 namespace Modules\Vehicle\src\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use Illuminate\Http\Request;
 use Modules\Vehicle\src\Http\Requests\V1\CreateServiceHistoryRequest;
 use Modules\Vehicle\src\Http\Requests\V1\UpdateServiceHistoryRequest;
 use Modules\Vehicle\src\Http\Resources\V1\ServiceHistoryResource;
@@ -13,12 +13,14 @@ use Modules\Vehicle\src\Http\Resources\V1\VehicleResource;
 use Modules\Vehicle\src\Models\ServiceHistory;
 use Modules\Vehicle\src\Models\Vehicle;
 use Modules\Vehicle\src\Services\ServiceHistoryService;
+use Modules\Vehicle\src\Services\VehicleService;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class ServiceHistoryViewController extends Controller
 {
     public function __construct(
         private readonly ServiceHistoryService $serviceHistoryService,
+        private readonly VehicleService $vehicleService
     ) {
         $this->middleware('permission:view-vehicles')->only(['index', 'show']);
         $this->middleware('permission:create-vehicles')->only(['create', 'store']);
@@ -28,7 +30,7 @@ class ServiceHistoryViewController extends Controller
 
     public function index(Request $request, Vehicle $vehicle)
     {
-        $serviceHistory = $this->serviceHistoryService->list([
+        $serviceHistories = $this->serviceHistoryService->list([
             'vehicle_id' => $vehicle->id,
             'sort' => $request->input('sort', 'service_date'),
             'direction' => $request->input('direction', 'desc'),
@@ -36,8 +38,8 @@ class ServiceHistoryViewController extends Controller
         ]);
 
         return Inertia::render('Vehicle/ServiceHistory/Index', [
-            'vehicle' => new VehicleResource($vehicle),
-            'serviceHistory' => ServiceHistoryResource::collection($serviceHistory),
+            'vehicle' => $vehicle,
+            'serviceHistories' => ServiceHistoryResource::collection($serviceHistories),
             'filters' => $request->only(['sort', 'direction']),
             'can' => [
                 'create' => auth()->user()->can('create-vehicles'),
@@ -50,21 +52,19 @@ class ServiceHistoryViewController extends Controller
     public function create(Vehicle $vehicle)
     {
         return Inertia::render('Vehicle/ServiceHistory/Create', [
-            'vehicle' => new VehicleResource($vehicle),
-            'serviceTypes' => $this->getServiceTypes(),
+            'vehicle' => $vehicle
         ]);
     }
 
-    public function store(CreateServiceHistoryRequest $request)
+    public function store(CreateServiceHistoryRequest $request, Vehicle $vehicle)
     {
         try {
-            $serviceHistory = $this->serviceHistoryService->create($request->validated());
-            $vehicleId = $serviceHistory->vehicle_id;
+            $serviceHistory = $this->serviceHistoryService->create($request->toDTO());
 
-            return redirect()->route('vehicles.service-history.index', $vehicleId)
+            return redirect()->route('vehicles.service-history.index', $vehicle)
                 ->with('flash', [
                     'type' => 'success',
-                    'message' => trans('vehicles.messages.service_history_created')
+                    'message' => trans('vehicles.messages.service_history.created')
                 ]);
         } catch (\Exception $e) {
             Log::error('Failed to create service history', [
@@ -76,6 +76,7 @@ class ServiceHistoryViewController extends Controller
         }
     }
 
+// Example fix for the show method in ServiceHistoryViewController
     public function show(Vehicle $vehicle, ServiceHistory $serviceHistory)
     {
         try {
@@ -105,12 +106,11 @@ class ServiceHistoryViewController extends Controller
 
     public function edit(Vehicle $vehicle, ServiceHistory $serviceHistory)
     {
-        $serviceHistory->load(['vehicle', 'media']);
+        $serviceHistory->load('media');
 
         return Inertia::render('Vehicle/ServiceHistory/Edit', [
-            'vehicle' => new VehicleResource($vehicle),
+            'vehicle' => $vehicle,
             'serviceHistory' => new ServiceHistoryResource($serviceHistory),
-            'serviceTypes' => $this->getServiceTypes(),
             'can' => [
                 'delete' => auth()->user()->can('delete-vehicles'),
             ]
@@ -120,12 +120,12 @@ class ServiceHistoryViewController extends Controller
     public function update(UpdateServiceHistoryRequest $request, Vehicle $vehicle, ServiceHistory $serviceHistory)
     {
         try {
-            $this->serviceHistoryService->update($serviceHistory->id, $request->validated());
+            $this->serviceHistoryService->update($serviceHistory->id, $request->toDTO());
 
-            return redirect()->route('vehicles.service-history.index', $vehicle->id)
+            return redirect()->route('vehicles.service-history.index', $vehicle)
                 ->with('flash', [
                     'type' => 'success',
-                    'message' => 'Service history updated successfully!'
+                    'message' => trans('vehicles.messages.service_history.updated')
                 ]);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -137,40 +137,40 @@ class ServiceHistoryViewController extends Controller
         try {
             $this->serviceHistoryService->delete($serviceHistory->id);
 
-            return redirect()->route('vehicles.service-history.index', $vehicle->id)
-                ->with('success', 'Service history deleted successfully.');
+            return redirect()->route('vehicles.service-history.index', $vehicle)
+                ->with('flash', [
+                    'type' => 'success',
+                    'message' => trans('vehicles.messages.service_history.deleted')
+                ]);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
-    public function destroyFile($fileId)
+    // IMPORTANT: Modified to handle both Inertia and AJAX requests
+    public function destroyFile(Request $request, $fileId)
     {
         try {
             $media = Media::findOrFail($fileId);
             $media->delete();
 
-            return response()->json(['message' => 'File deleted successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
+            // Check if this is an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['message' => 'File deleted successfully']);
+            }
 
-    private function getServiceTypes(): array
-    {
-        return [
-            'Oil Change',
-            'Tire Rotation',
-            'Brake Service',
-            'Engine Tune-Up',
-            'Air Filter Replacement',
-            'Battery Replacement',
-            'Coolant Flush',
-            'Transmission Service',
-            'Wheel Alignment',
-            'Emission Test',
-            'General Maintenance',
-            'Other',
-        ];
+            // Otherwise, return a redirect for Inertia
+            return redirect()->back()
+                ->with('flash', [
+                    'type' => 'success',
+                    'message' => 'File deleted successfully'
+                ]);
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
+
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 }

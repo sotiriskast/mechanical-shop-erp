@@ -1,18 +1,22 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import {
     PencilIcon,
     TrashIcon,
     ArrowLeftIcon,
-    ClockIcon
+    PlusIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
     vehicle: {
         type: Object,
         required: true
+    },
+    serviceHistory: {
+        type: Array,
+        default: () => []
     },
     can: {
         type: Object,
@@ -23,13 +27,8 @@ const props = defineProps({
     }
 })
 
-const fullName = computed(() => {
-    if (!props.vehicle) return 'Unknown Vehicle'
-    return `${props.vehicle.make} ${props.vehicle.model} (${props.vehicle.year})`
-})
-
 const title = computed(() => {
-    return `Vehicle: ${fullName.value}`
+    return `Vehicle: ${props.vehicle.license_plate} - ${props.vehicle.full_name}`
 })
 
 const confirmDelete = () => {
@@ -43,8 +42,6 @@ const confirmDelete = () => {
 
 <template>
     <AppLayout :title="title">
-        <Head :title="title" />
-
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="mb-4 flex justify-between items-center">
@@ -58,22 +55,15 @@ const confirmDelete = () => {
 
                     <div class="flex space-x-2">
                         <Link
-                            :href="route('vehicles.service-history.index', vehicle.id)"
-                            class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 focus:bg-purple-700 active:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition ease-in-out duration-150"
-                        >
-                            <ClockIcon class="h-4 w-4 mr-2"/>
-                            Service History
-                        </Link>
-                        <Link
-                            v-if="can.edit"
+                            v-if="can.edit && vehicle?.id"
                             :href="route('vehicles.edit', vehicle.id)"
-                            class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
                         >
                             <PencilIcon class="h-4 w-4 mr-2"/>
                             Edit
                         </Link>
                         <button
-                            v-if="can.delete"
+                            v-if="can.delete && vehicle?.id"
                             @click="confirmDelete"
                             class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150"
                         >
@@ -85,6 +75,7 @@ const confirmDelete = () => {
 
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Vehicle Information -->
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 mb-2">Vehicle Information</h3>
                             <div class="space-y-2">
@@ -98,10 +89,10 @@ const confirmDelete = () => {
                                     <strong>Status:</strong>
                                     <span
                                         :class="[
-                                            'px-2 py-1 rounded-full text-xs',
                                             vehicle.status === 'active' ? 'bg-green-100 text-green-800' :
                                             vehicle.status === 'inactive' ? 'bg-yellow-100 text-yellow-800' :
-                                            'bg-red-100 text-red-800'
+                                            'bg-red-100 text-red-800',
+                                            'px-2 py-1 rounded-full text-xs'
                                         ]"
                                     >
                                         {{ vehicle.status }}
@@ -110,6 +101,7 @@ const confirmDelete = () => {
                             </div>
                         </div>
 
+                        <!-- Technical Information -->
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 mb-2">Technical Information</h3>
                             <div class="space-y-2">
@@ -120,26 +112,105 @@ const confirmDelete = () => {
                             </div>
                         </div>
 
+                        <!-- Customer Information -->
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Owner Information</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Customer Information</h3>
                             <div class="space-y-2" v-if="vehicle.customer">
-                                <p><strong>Customer:</strong> {{ vehicle.customer.full_name }}</p>
+                                <p><strong>Name:</strong> {{ vehicle.customer.full_name }}</p>
                                 <p><strong>Company:</strong> {{ vehicle.customer.company_name || 'N/A' }}</p>
                                 <p><strong>Email:</strong> {{ vehicle.customer.email || 'N/A' }}</p>
                                 <p><strong>Phone:</strong> {{ vehicle.customer.phone || 'N/A' }}</p>
                                 <Link
-                                    :href="route('customers.show', vehicle.customer_id)"
-                                    class="text-indigo-600 hover:text-indigo-900"
+                                    :href="route('customers.show', vehicle.customer.id)"
+                                    class="inline-flex items-center mt-2 text-sm text-indigo-600 hover:text-indigo-900"
                                 >
-                                    View Customer
+                                    View Customer Details
                                 </Link>
                             </div>
-                            <p v-else class="text-gray-500">No customer associated</p>
                         </div>
 
+                        <!-- Notes -->
                         <div v-if="vehicle.notes">
                             <h3 class="text-lg font-semibold text-gray-900 mb-2">Notes</h3>
                             <p class="text-gray-600">{{ vehicle.notes }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Service History -->
+                    <div class="px-6 py-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Service History</h3>
+                            <Link
+                                :href="route('vehicles.service-history.create', {id: vehicle.id} )"
+                                class="inline-flex items-center px-3 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                            >
+                                <PlusIcon class="h-4 w-4 mr-1"/>
+                                Add Service Record
+                            </Link>
+                        </div>
+
+                        <div v-if="serviceHistory && serviceHistory.length > 0">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Type</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mileage</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Technician</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tr v-for="record in serviceHistory" :key="record.id">
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        {{ new Date(record.service_date).toLocaleDateString() }}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        {{ record.service_type }}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        {{ record.mileage }} {{ record.mileage_unit }}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        {{ record.technician_name || 'N/A' }}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span
+                                            :class="[
+                                                record.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                record.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                                                record.status === 'scheduled' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800',
+                                                'px-2 py-1 rounded-full text-xs'
+                                            ]"
+                                        >
+                                            {{ record.status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-right flex space-x-2">
+                                        <Link
+                                            :href="route('vehicles.service-history.show', [vehicle.id, record.id])"
+                                            class="text-blue-500 hover:text-blue-700"
+                                            title="View"
+                                        >
+                                            <EyeIcon class="h-5 w-5" />
+                                        </Link>
+                                        <Link
+                                            v-if="can.edit"
+                                            :href="route('vehicles.service-history.edit', [vehicle.id, record.id])"
+                                            class="text-green-500 hover:text-green-700"
+                                            title="Edit"
+                                        >
+                                            <PencilIcon class="h-5 w-5" />
+                                        </Link>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div v-else class="bg-white p-4 text-center text-gray-500">
+                            No service records found.
                         </div>
                     </div>
                 </div>

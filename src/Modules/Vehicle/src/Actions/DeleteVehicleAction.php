@@ -7,10 +7,10 @@ use Modules\Vehicle\src\Events\VehicleDeleted;
 use Modules\Vehicle\src\Exceptions\VehicleException;
 use Modules\Vehicle\src\Repositories\VehicleRepository;
 
-class DeleteVehicleAction
+readonly class DeleteVehicleAction
 {
     public function __construct(
-        private VehicleRepository $repository
+        private VehicleRepository $repository,
     ) {}
 
     public function execute(int $id): bool
@@ -23,9 +23,9 @@ class DeleteVehicleAction
                     throw new VehicleException(trans('vehicles.errors.not_found'));
                 }
 
-                // Check if vehicle has related records that should prevent deletion
-                if ($this->hasRelatedRecords($vehicle)) {
-                    throw new VehicleException(trans('vehicles.errors.has_related_records'));
+                // Check if there are any work orders associated with this vehicle (to be implemented when Workshop module is created)
+                if ($this->hasRelatedWorkOrders($vehicle)) {
+                    throw new VehicleException(trans('vehicles.errors.has_related_work_orders'));
                 }
 
                 $deleted = $this->repository->delete($id);
@@ -47,10 +47,10 @@ class DeleteVehicleAction
         }
     }
 
-    private function hasRelatedRecords($vehicle): bool
+    private function hasRelatedWorkOrders($vehicle): bool
     {
-        // If a vehicle has active work orders, it shouldn't be deleted
-        // This will be expanded when Workshop module is implemented
+        // This will be implemented when Workshop module is created
+        // For now, return false to allow deletion
         return false;
     }
 }

@@ -2,40 +2,18 @@
 
 namespace Modules\Vehicle\src\Http\Requests\V1;
 
-class UpdateServiceHistoryRequest extends CreateServiceHistoryRequest
-{
-    public function authorize(): bool
-    {
-        return true;
-    }
+use Modules\Vehicle\src\Contracts\ServiceHistoryRequestContract;
+use Modules\Vehicle\src\DTOs\ServiceHistoryData;
 
+class UpdateServiceHistoryRequest extends CreateServiceHistoryRequest implements ServiceHistoryRequestContract
+{
     public function rules(): array
     {
-        return [
-            'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
-            'service_date' => ['required', 'date'],
-            'service_type' => ['required', 'string', 'max:50'],
-            'description' => ['required', 'string'],
-            'mileage' => ['required', 'integer', 'min:0'],
-            'mileage_unit' => ['nullable', 'string', 'in:km,mi'],
-            'technician_name' => ['nullable', 'string', 'max:100'],
-            'cost' => ['nullable', 'numeric', 'min:0'],
-            'status' => ['nullable', 'string', 'in:completed,scheduled,in_progress,cancelled'],
-            'notes' => ['nullable', 'string'],
-            'work_order_id' => ['nullable', 'integer'],
-            'documents.*' => [
-                'nullable',
-                'file',
-                'mimes:pdf,doc,docx,jpg,jpeg,png',
-                'max:10240'
-            ],
-        ];
-    }
+        $rules = parent::rules();
 
-    public function messages(): array
-    {
-        return [
-            'documents.*.max' => trans('vehicles.validation.document_size'),
-            'documents.*.mimes' => trans('vehicles.validation.document_type'),
-        ];
-    }}
+        // No need to modify any rules for updating service history
+        // as there aren't any unique constraints to worry about
+
+        return $rules;
+    }
+}

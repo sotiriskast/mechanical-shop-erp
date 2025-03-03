@@ -55,7 +55,10 @@ class Customer extends Model implements HasMedia
             $customer->code = 'CUS-' . str_pad($nextId, 6, '0', STR_PAD_LEFT);
         });
     }
-
+    protected static function newFactory()
+    {
+        return \Modules\Customer\database\factories\CustomerFactory::new();
+    }
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

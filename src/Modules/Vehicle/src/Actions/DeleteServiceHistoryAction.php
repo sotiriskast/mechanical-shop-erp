@@ -7,7 +7,7 @@ use Modules\Vehicle\src\Events\ServiceHistoryDeleted;
 use Modules\Vehicle\src\Exceptions\ServiceHistoryException;
 use Modules\Vehicle\src\Repositories\ServiceHistoryRepository;
 
-class DeleteServiceHistoryAction
+readonly class DeleteServiceHistoryAction
 {
     public function __construct(
         private ServiceHistoryRepository $repository
@@ -20,7 +20,7 @@ class DeleteServiceHistoryAction
                 $serviceHistory = $this->repository->find($id);
 
                 if (!$serviceHistory) {
-                    throw new ServiceHistoryException(trans('vehicles.errors.service_history_not_found'));
+                    throw new ServiceHistoryException(trans('vehicles.errors.service_history.not_found'));
                 }
 
                 $deleted = $this->repository->delete($id);
@@ -35,7 +35,7 @@ class DeleteServiceHistoryAction
             throw $e;
         } catch (\Exception $e) {
             throw new ServiceHistoryException(
-                trans('vehicles.errors.delete_service_history_failed'),
+                trans('vehicles.errors.service_history.delete_failed'),
                 0,
                 $e
             );

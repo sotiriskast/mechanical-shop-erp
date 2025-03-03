@@ -2,68 +2,68 @@
 
 namespace Modules\Vehicle\src\DTOs;
 
-use Modules\Vehicle\src\Http\Requests\V1\CreateVehicleRequest;
+use Carbon\Carbon;
 
 class VehicleData
 {
     public function __construct(
-        public readonly string $licensePlate,
-        public readonly ?string $vin,
+        public readonly int $customerId,
         public readonly string $make,
         public readonly string $model,
-        public readonly int $year,
-        public readonly ?string $color,
-        public readonly ?string $engineNumber,
-        public readonly ?string $engineType,
-        public readonly ?string $transmission,
-        public readonly int $mileage,
-        public readonly string $mileageUnit,
-        public readonly ?string $notes,
-        public readonly string $status,
-        public readonly int $customerId,
+        public readonly ?int $year,
+        public readonly string $licensePlate,
+        public readonly ?string $vin = null,
+        public readonly ?string $color = null,
+        public readonly ?string $engineType = null,
+        public readonly ?string $transmission = null,
+        public readonly ?int $mileage = null,
+        public readonly ?Carbon $registrationDate = null,
+        public readonly ?Carbon $motDueDate = null,
+        public readonly ?Carbon $insuranceExpiryDate = null,
+        public readonly ?string $notes = null,
         public readonly ?array $documents = []
     ) {}
 
-    public static function fromRequest(CreateVehicleRequest $request): self
+    // Static method to create from array (useful when coming from requests)
+    public static function fromArray(array $data): self
     {
-        $validated = $request->validated();
-
         return new self(
-            licensePlate: $validated['license_plate'],
-            vin: $validated['vin'] ?? null,
-            make: $validated['make'],
-            model: $validated['model'],
-            year: (int) $validated['year'],
-            color: $validated['color'] ?? null,
-            engineNumber: $validated['engine_number'] ?? null,
-            engineType: $validated['engine_type'] ?? null,
-            transmission: $validated['transmission'] ?? null,
-            mileage: (int) ($validated['mileage'] ?? 0),
-            mileageUnit: $validated['mileage_unit'] ?? 'km',
-            notes: $validated['notes'] ?? null,
-            status: $validated['status'] ?? 'active',
-            customerId: $validated['customer_id'],
-            documents: $validated['documents'] ?? []
+            customerId: $data['customer_id'],
+            make: $data['make'],
+            model: $data['model'],
+            year: $data['year'] ?? null,
+            licensePlate: $data['license_plate'],
+            vin: $data['vin'] ?? null,
+            color: $data['color'] ?? null,
+            engineType: $data['engine_type'] ?? null,
+            transmission: $data['transmission'] ?? null,
+            mileage: $data['mileage'] ?? null,
+            registrationDate: isset($data['registration_date']) ? Carbon::parse($data['registration_date']) : null,
+            motDueDate: isset($data['mot_due_date']) ? Carbon::parse($data['mot_due_date']) : null,
+            insuranceExpiryDate: isset($data['insurance_expiry_date']) ? Carbon::parse($data['insurance_expiry_date']) : null,
+            notes: $data['notes'] ?? null,
+            documents: $data['documents'] ?? []
         );
     }
 
+    // Convert to array (useful for repository operations)
     public function toArray(): array
     {
         return [
-            'license_plate' => $this->licensePlate,
-            'vin' => $this->vin,
+            'customer_id' => $this->customerId,
             'make' => $this->make,
             'model' => $this->model,
             'year' => $this->year,
+            'license_plate' => $this->licensePlate,
+            'vin' => $this->vin,
             'color' => $this->color,
-            'engine_number' => $this->engineNumber,
             'engine_type' => $this->engineType,
             'transmission' => $this->transmission,
             'mileage' => $this->mileage,
-            'mileage_unit' => $this->mileageUnit,
-            'notes' => $this->notes,
-            'status' => $this->status,
-            'customer_id' => $this->customerId
+            'registration_date' => $this->registrationDate,
+            'mot_due_date' => $this->motDueDate,
+            'insurance_expiry_date' => $this->insuranceExpiryDate,
+            'notes' => $this->notes
         ];
     }
 }

@@ -36,7 +36,7 @@
             "Modules\\": "src/Modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
-            "Modules\\Customer\\Database\\Factories\\": "database/factories",
+            "Modules\\Customer\\Database\\Factories\\": "src/Modules/Customer/database/factories/",
             "Modules\\Vehicle\\Database\\Factories\\": "src/Modules/Vehicle/database/factories/"
 
 

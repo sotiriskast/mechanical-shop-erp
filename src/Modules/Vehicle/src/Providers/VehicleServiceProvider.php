@@ -7,8 +7,8 @@ use Modules\Vehicle\src\Actions\CreateVehicleAction;
 use Modules\Vehicle\src\Actions\DeleteVehicleAction;
 use Modules\Vehicle\src\Actions\UpdateVehicleAction;
 use Modules\Vehicle\src\Actions\CreateServiceHistoryAction;
-use Modules\Vehicle\src\Actions\UpdateServiceHistoryAction;
 use Modules\Vehicle\src\Actions\DeleteServiceHistoryAction;
+use Modules\Vehicle\src\Actions\UpdateServiceHistoryAction;
 use Modules\Vehicle\src\Models\Vehicle;
 use Modules\Vehicle\src\Models\ServiceHistory;
 use Modules\Vehicle\src\Repositories\VehicleRepository;
@@ -25,7 +25,7 @@ class VehicleServiceProvider extends BaseModuleServiceProvider
 
     protected function registerBindings(): void
     {
-        // Bind repositories
+        // Register repositories
         $this->app->bind(VehicleRepository::class, function ($app) {
             return new VehicleRepository($app->make(Vehicle::class));
         });
@@ -34,10 +34,12 @@ class VehicleServiceProvider extends BaseModuleServiceProvider
             return new ServiceHistoryRepository($app->make(ServiceHistory::class));
         });
 
-        // Register actions as singletons
+        // Register vehicle actions as singletons
         $this->app->singleton(CreateVehicleAction::class);
         $this->app->singleton(UpdateVehicleAction::class);
         $this->app->singleton(DeleteVehicleAction::class);
+
+        // Register service history actions as singletons
         $this->app->singleton(CreateServiceHistoryAction::class);
         $this->app->singleton(UpdateServiceHistoryAction::class);
         $this->app->singleton(DeleteServiceHistoryAction::class);
@@ -67,9 +69,9 @@ class VehicleServiceProvider extends BaseModuleServiceProvider
 
     protected function bootModule(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
-        $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadRoutesFrom(__DIR__ . '/../src/routes/api.php');
+        $this->loadRoutesFrom(__DIR__ . '/../src/routes/web.php');
         $this->loadTranslationsFrom(__DIR__ . '/../../lang', 'vehicle');
     }
 }

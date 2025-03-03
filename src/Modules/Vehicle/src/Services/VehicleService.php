@@ -2,21 +2,20 @@
 
 namespace Modules\Vehicle\src\Services;
 
+use Illuminate\Pagination\LengthAwarePaginator;
 use Modules\Core\src\Abstracts\BaseService;
 use Modules\Vehicle\src\Actions\CreateVehicleAction;
-use Modules\Vehicle\src\Actions\UpdateVehicleAction;
 use Modules\Vehicle\src\Actions\DeleteVehicleAction;
+use Modules\Vehicle\src\Actions\UpdateVehicleAction;
 use Modules\Vehicle\src\DTOs\VehicleData;
-use Modules\Vehicle\src\Models\Vehicle;
 use Modules\Vehicle\src\Exceptions\VehicleException;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
+use Modules\Vehicle\src\Models\Vehicle;
 use Modules\Vehicle\src\Repositories\VehicleRepository;
 
 class VehicleService extends BaseService
 {
     public function __construct(
-        VehicleRepository $repository,
+        VehicleRepository                    $repository,
         private readonly CreateVehicleAction $createAction,
         private readonly UpdateVehicleAction $updateAction,
         private readonly DeleteVehicleAction $deleteAction
@@ -37,11 +36,10 @@ class VehicleService extends BaseService
         }
     }
 
-    public function create(array $data): Vehicle
+    public function create(VehicleData|array $data): Vehicle
     {
         try {
-            $vehicleData = VehicleData::fromRequest($data);
-            return $this->createAction->execute($vehicleData);
+            return $this->createAction->execute($data);
         } catch (\Exception $e) {
             throw new VehicleException(
                 trans('vehicles.errors.create_failed'),
@@ -51,11 +49,10 @@ class VehicleService extends BaseService
         }
     }
 
-    public function update(int $id, array $data): Vehicle
+    public function update(int $id, VehicleData $data): Vehicle
     {
         try {
-            $vehicleData = VehicleData::fromRequest($data);
-            return $this->updateAction->execute($id, $vehicleData);
+            return $this->updateAction->execute($id, $data);
         } catch (\Exception $e) {
             throw new VehicleException(
                 trans('vehicles.errors.update_failed'),
@@ -78,19 +75,6 @@ class VehicleService extends BaseService
         }
     }
 
-    public function getCustomerVehicles(int $customerId): Collection
-    {
-        try {
-            return $this->repository->getCustomerVehicles($customerId);
-        } catch (\Exception $e) {
-            throw new VehicleException(
-                trans('vehicles.errors.fetch_failed'),
-                0,
-                $e
-            );
-        }
-    }
-
     public function findByLicensePlate(string $licensePlate): ?Vehicle
     {
         try {
@@ -104,10 +88,23 @@ class VehicleService extends BaseService
         }
     }
 
-    public function getActiveVehicles(): Collection
+    public function findByVIN(string $vin): ?Vehicle
     {
         try {
-            return $this->repository->getActiveVehicles();
+            return $this->repository->findByVIN($vin);
+        } catch (\Exception $e) {
+            throw new VehicleException(
+                trans('vehicles.errors.fetch_failed'),
+                0,
+                $e
+            );
+        }
+    }
+
+    public function getVehiclesByCustomer(int $customerId): array
+    {
+        try {
+            return $this->repository->getVehiclesByCustomer($customerId)->toArray();
         } catch (\Exception $e) {
             throw new VehicleException(
                 trans('vehicles.errors.fetch_failed'),

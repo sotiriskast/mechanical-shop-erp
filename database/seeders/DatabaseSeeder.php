@@ -3,11 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Modules\Customer\database\Seeders\CustomerSeeder;
-use Modules\Vehicle\database\seeders\VehiclePermissionSeeder;
-use Modules\Vehicle\database\seeders\VehicleSeeder;
-
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,10 +13,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RolesAndPermissionsSeeder::class,
-            CustomerSeeder::class,
-            VehicleSeeder::class,
-            VehiclePermissionSeeder::class,
         ]);
-
+        $this->call([
+            \Modules\Vehicle\database\seeders\DatabaseSeeder::class,
+            \Modules\Customer\database\seeders\DatabaseSeeder::class,
+            // Add other module seeders as needed
+        ]);
     }
 }

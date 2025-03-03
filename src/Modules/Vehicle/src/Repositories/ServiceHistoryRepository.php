@@ -32,18 +32,18 @@ class ServiceHistoryRepository extends BaseRepository
 
     public function update(int $id, array $data): ServiceHistory
     {
-        $serviceHistory = $this->find($id);
+        $serviceHistory = parent::find($id);
         $vehicleId = $serviceHistory->vehicle_id;
 
-        $serviceHistory = parent::update($id, $data);
+        $updatedServiceHistory = parent::update($id, $data);
         $this->invalidateCache($vehicleId);
 
-        return $serviceHistory;
+        return $updatedServiceHistory;
     }
 
     public function delete(int $id): bool
     {
-        $serviceHistory = $this->find($id);
+        $serviceHistory = parent::find($id);
         $vehicleId = $serviceHistory->vehicle_id;
 
         $result = parent::delete($id);
@@ -52,18 +52,28 @@ class ServiceHistoryRepository extends BaseRepository
         return $result;
     }
 
-    public function getVehicleServiceHistory(int $vehicleId): Collection
+    public function getServiceHistoryByVehicle(int $vehicleId): Collection
     {
-        return Cache::remember("vehicle:{$vehicleId}:service-history", self::CACHE_TTL, function () use ($vehicleId) {
+        return Cache::remember("service_history:vehicle:{$vehicleId}", self::CACHE_TTL, function () use ($vehicleId) {
             return $this->model->where('vehicle_id', $vehicleId)
                 ->orderBy('service_date', 'desc')
                 ->get();
         });
     }
 
+    public function getRecentServiceHistories(int $limit = 10): Collection
+    {
+        return Cache::remember("service_history:recent:{$limit}", self::CACHE_TTL, function () use ($limit) {
+            return $this->model->with('vehicle')
+                ->orderBy('service_date', 'desc')
+                ->limit($limit)
+                ->get();
+        });
+    }
+
     public function searchServiceHistory(array $params): LengthAwarePaginator
     {
-        $cacheKey = 'service-history:search:' . md5(serialize($params));
+        $cacheKey = 'service_history:search:' . md5(serialize($params));
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($params) {
             $query = $this->model->query();
@@ -86,11 +96,15 @@ class ServiceHistoryRepository extends BaseRepository
 
     private function applySearchCriteria(Builder $query, string $search): Builder
     {
-        return $query->where(function ($q) use ($search) {
-            $q->where('service_type', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%")
-                ->orWhere('technician_name', 'like', "%{$search}%");
-        });
+        if (strlen($search) > 2) {
+            return $query->where(function ($q) use ($search) {
+                $q->where('service_type', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('technician_name', 'like', "%{$search}%");
+            });
+        }
+
+        return $query;
     }
 
     private function applyFilters(Builder $query, array $params): Builder
@@ -129,7 +143,7 @@ class ServiceHistoryRepository extends BaseRepository
     private function invalidateCache(?int $vehicleId = null): void
     {
         $keys = [
-            'service-history:recent',
+            'service_history:recent:10',
         ];
 
         foreach ($keys as $key) {
@@ -137,7 +151,7 @@ class ServiceHistoryRepository extends BaseRepository
         }
 
         if ($vehicleId) {
-            Cache::forget("vehicle:{$vehicleId}:service-history");
+            Cache::forget("service_history:vehicle:{$vehicleId}");
         }
     }
 }
