@@ -9,6 +9,7 @@ import {
     PlusIcon,
     ArrowLeftIcon
 } from '@heroicons/vue/24/outline'
+import { reactive, watch } from 'vue';
 
 const props = defineProps({
     vehicle: Object,
@@ -22,7 +23,13 @@ const confirmDelete = (serviceHistoryId) => {
         router.delete(route('vehicles.service-history.destroy', [props.vehicle.id, serviceHistoryId]))
     }
 }
+const vehicle = reactive({ ...props.vehicle.data });
 
+watch(() => props.vehicle, (newVehicle) => {
+    if (newVehicle) {
+        Object.assign(vehicle, newVehicle);
+    }
+}, { immediate: true, deep: true });
 const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString();
 }
